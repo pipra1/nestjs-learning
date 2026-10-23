@@ -5,8 +5,11 @@ import { AppService } from './app.service.js';
 import { LoggerMiddleware } from './common/logger.middleware.js';
 import { ConfigModule } from '@nestjs/config'
 import { AuthModule } from './auth/auth.module.js';
-import { UsersService } from './users/users.service.js';
 import { UsersModule } from './users/users.module.js';
+import { RolesModule } from './roles/roles.module.js';
+import { AdminModule } from './admin/admin.module.js';
+import { TasksModule } from './tasks/tasks.module.js';
+import { PrismaModule } from './prisma/prisma.module.js';
 
 export const { ObserveModule, ObserveInstrument } = createObserveModule();
 
@@ -16,14 +19,18 @@ export const { ObserveModule, ObserveInstrument } = createObserveModule();
     ConfigModule.forRoot({
       isGlobal: true,
     }),
+    PrismaModule,
     AuthModule,
-    UsersModule
+    UsersModule,
+    RolesModule,
+    AdminModule,
+    TasksModule
   ],
   controllers: [AppController],
-  providers: [AppService, UsersService],
+  providers: [AppService], 
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
-    consumer.apply(LoggerMiddleware).forRoutes(AppController)
+    consumer.apply(LoggerMiddleware).forRoutes('*')
   }
 }

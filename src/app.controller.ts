@@ -7,7 +7,7 @@ import { TimingInterceptor } from './common/timing.interceptor.js';
 export class AppController {
   constructor(private readonly appService: AppService) {}
 
-  @Get(':id')
+  @Get('demo/:id')
   @UseGuards(DemoKeyGuard)
   @UseInterceptors(TimingInterceptor)
   findOne(@Param('id', ParseIntPipe) id: number) {

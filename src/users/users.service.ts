@@ -1,60 +1,67 @@
 import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
-import { User } from './user.interface.js';
 import * as bcrypt from 'bcrypt';
+import { PrismaService } from '../prisma/prisma.service.js';
 
 @Injectable()
 export class UsersService {
-  private users: User[] = [];
-  private nextId = 1;
+  constructor(private readonly prisma: PrismaService) {}
 
-  findById(id: number): User | undefined {
-    return this.users.find((user) => user.id === id);
+  findById(id: number) {
+    return this.prisma.user.findUnique({ where: { id } });
   }
 
   async create(email: string, password: string) {
     const normalizedEmail = email.toLowerCase().trim();
 
-    const existingUser = this.users.find(user => user.email == normalizedEmail);
+    const existingUser = await this.prisma.user.findUnique({
+      where: { email: normalizedEmail },
+    });
 
-    if(existingUser) {
-      throw new ConflictException('Email is already registered')
+    if (existingUser) {
+      throw new ConflictException('Email is already registered');
     }
 
     const passwordHash = await bcrypt.hash(password, 12);
 
-    const user: User = {
-      id: this.nextId++,
-      email: normalizedEmail,
-      passwordHash,
-      role: 'user',
-    }
-
-    this.users.push(user);
+    const user = await this.prisma.user.create({
+      data: {
+        email: normalizedEmail,
+        passwordHash,
+        role: 'user',
+      },
+    });
 
     return this.toPublicUser(user);
   }
 
-  toPublicUser(user: User) {
+  toPublicUser(user: {
+    id: number;
+    email: string;
+    role: 'user' | 'admin';
+  }) {
     return {
       id: user.id,
       email: user.email,
       role: user.role,
-    }
+    };
   }
 
   async findByEmail(email: string) {
     const normalizedEmail = email.toLowerCase().trim();
 
-    return this.users.find(user => user.email === normalizedEmail)
+    return this.prisma.user.findUnique({ where: { email: normalizedEmail } });
   }
 
   async updateRefreshTokenHash(userId: number, refreshTokenHash: string | null) {
-    const user = this.findById(userId);
+    const user = await this.findById(userId);
 
-    if(!user) {
+    if (!user) {
       throw new NotFoundException('User not found');
     }
 
-    user.refreshTokenHash = refreshTokenHash;
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: { refreshTokenHash },
+    });
   }
 }

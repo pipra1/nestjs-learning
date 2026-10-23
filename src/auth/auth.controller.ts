@@ -28,27 +28,25 @@ interface AuthenticatedRequest extends Request {
 }
 
 @Controller('auth')
+@UseInterceptors(TimingInterceptor)
 export class AuthController {
   constructor(
     private readonly authService: AuthService,
   ) {}
 
   @Post('register')
-  @UseInterceptors(TimingInterceptor)
   register(@Body() dto: RegisterDto) {
     return this.authService.register(dto);
   }
 
   @Post('login')
   @HttpCode(HttpStatus.OK)
-  @UseInterceptors(TimingInterceptor)
   login(@Body() dto: LoginDto) {
     return this.authService.login(dto);
   }
 
   @Get('profile')
   @UseGuards(JwtAuthGuard)
-  @UseInterceptors(TimingInterceptor)
   getProfile(@Req() request: AuthenticatedRequest) {
     return request.user;
   }
